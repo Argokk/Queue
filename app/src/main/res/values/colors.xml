@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="app_bg">#F4F6FB</color>
+    <color name="app_surface">#FFFFFF</color>
+    <color name="app_surface_2">#EEF2FF</color>
+    <color name="app_primary">#5B4BFF</color>
+    <color name="app_text">#171722</color>
+    <color name="app_text_secondary">#71717A</color>
+    <color name="app_stroke">#E7E9F1</color>
+    <color name="header_start">#6857FF</color>
+    <color name="header_end">#8B5CF6</color>
+    <color name="app_header_text">#FFFFFF</color>
+    <color name="app_header_subtitle">#EEEAFE</color>
+    <color name="search_bg">#FDFDFF</color>
+    <color name="search_stroke">#FFFFFF</color>
+    <color name="chip_light_bg">#FFFFFF</color>
+    <color name="tab_icon_color">#7C3AED</color>
 </resources>

@@ -3,21 +3,34 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:fitsSystemWindows="true"
     android:layout_height="match_parent"
+    android:background="@color/app_bg"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
     tools:context=".MainActivity">
+
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/pager"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
-        </androidx.viewpager2.widget.ViewPager2>
+            android:layout_weight="1" />
+
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab"
             android:layout_width="match_parent"
-            android:layout_height="80dp">
-        </com.google.android.material.tabs.TabLayout>
+            android:layout_height="78dp"
+            android:background="@drawable/bg_bottom_nav"
+            android:elevation="14dp"
+            app:tabGravity="fill"
+            app:tabIconTint="@color/tab_icon_color"
+            app:tabIndicatorColor="@color/app_primary"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorHeight="4dp"
+            app:tabMode="fixed"
+            app:tabRippleColor="@android:color/transparent"
+            app:tabSelectedTextColor="@color/app_primary"
+            app:tabTextAppearance="@style/AppTabText"
+            app:tabTextColor="@color/app_text_secondary" />
 
 </LinearLayout>

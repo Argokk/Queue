@@ -4,25 +4,19 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.LifecycleOwner
 import com.bumptech.glide.Glide
-import com.example.queues.api.ApiFactory
 import com.example.queues.databinding.ActivityQueueBinding
 import com.example.queues.dto.EnterpriseDto
 import com.example.queues.dto.QueueDto
-import com.example.queues.dto.QueueEntryDto
 
 class QueueActivity : AppCompatActivity() {
     lateinit var binding: ActivityQueueBinding
     lateinit var enterprise: EnterpriseDto
-    lateinit var queue : QueueDto
-    //private val adapter = QueueEntryAdapter()
-    lateinit var queueEntry: QueueEntryDto
+    lateinit var queue: QueueDto
     private val queueViewModel: QueueViewModel by viewModels()
-    private val entViewModel : EnterprisesViewModel by viewModels()
+    private val entViewModel: EnterprisesViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -30,26 +24,34 @@ class QueueActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         binding.backBut.setOnClickListener { finish() }
-        entViewModel.loadEnterpriseById(intent.getLongExtra("ent_id", -1))
 
-
-        entViewModel.enterprise.observe(this@QueueActivity) {
-            enterprise = it
-            binding.data = enterprise
-            Glide.with(this).load(enterprise.url).into(binding.imageView)
-            queueViewModel.getQueueById(enterprise.id)
+        val entId = intent.getLongExtra("ent_id", -1)
+        if(entId != -1L){
+            entViewModel.loadEnterpriseById(entId)
+        } else {
+            entViewModel.loadEnterprises()
         }
 
+        entViewModel.enterprise.observe(this) { ent ->
+            ent?.let {
+                enterprise = it
+                binding.data = it
+                Glide.with(this).load(it.url).into(binding.imageView)
+                it.queue?.let { q -> queueViewModel.getQueueById(q.id) }
+            }
+        }
 
-        queueViewModel.queue.observe(this@QueueActivity){
-            queue = it
+        queueViewModel.queue.observe(this) { q ->
+            q?.let {
+                queue = it
+                binding.queueNumber.text = "Очередь: ${it.peopleCount}"
+            }
         }
 
         binding.newEntryButton.setOnClickListener {
-            queueViewModel.createNewEntry(queue.id)
-        }
-        queueViewModel.entry.observe(this@QueueActivity){
-            queueEntry = it
+            if(::queue.isInitialized){
+                queueViewModel.createNewEntry(queue.id)
+            }
         }
     }
 }

@@ -10,16 +10,21 @@ import com.example.queues.dto.QueueEntryDto
 import kotlinx.coroutines.launch
 
 class QueueViewModel: ViewModel() {
-    var entry = MutableLiveData<QueueEntryDto>()
-    var queue = MutableLiveData<QueueDto>()
-    fun createNewEntry(queueId: Long){
+    val entry = MutableLiveData<QueueEntryDto>()
+    val queue = MutableLiveData<QueueDto>()
+
+    fun getQueueById(queueId: Long){
         viewModelScope.launch {
-            entry.value = ApiFactory.queueEntryApi.createQueueEntry(CreateQueueEntryDto(queueId)).body()
+            val response = ApiFactory.queueApi.getQueueByEntId(queueId)
+            queue.value = response.body()
         }
     }
-    fun getQueueById(entId: Long){
+
+    fun createNewEntry(queueId: Long){
         viewModelScope.launch {
-            queue.value = ApiFactory.queueApi.getQueueByEntId(entId).body()
+            val response = ApiFactory.queueEntryApi.createQueueEntry(CreateQueueEntryDto(queueId))
+            entry.value = response.body()
+            getQueueById(queueId) // сразу обновляем очередь
         }
     }
 }

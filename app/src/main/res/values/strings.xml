@@ -1,5 +1,9 @@
 <resources>
-    <string name="app_name">Queues</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name">QueueApp</string>
+    <string name="back">Назад</string>
+    <string name="enterprise_photo">Фото заведения</string>
+    <string name="queue_number_text">Очередь: </string>
+    <string name="my_number_text">Мой номер: %1$d</string>
+    <string name="join_queue">Встать в очередь</string>
+    <string name="queue_notification">Мы уведомим вас, когда подойдёт ваша очередь</string>
 </resources>
