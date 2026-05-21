@@ -34,7 +34,7 @@ class EnterprisesViewModel: ViewModel() {
                 //Log.d("myyy",enterprise.value.toString())
             }
             else{
-                //Log.d("my_log","отсос")
+                //Log.d("my_log","")
             }
         }
     }
