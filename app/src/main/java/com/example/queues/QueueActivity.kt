@@ -1,6 +1,7 @@
 package com.example.queues
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -24,14 +25,15 @@ class QueueActivity : AppCompatActivity() {
         setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         binding.backBut.setOnClickListener { finish() }
-
         val entId = intent.getLongExtra("ent_id", -1)
         if(entId != -1L){
             entViewModel.loadEnterpriseById(entId)
         } else {
             entViewModel.loadEnterprises()
         }
-
+        queueViewModel.people_count.observe(this@QueueActivity){
+            binding.queueNumber.text = "Очередь: ${it}"
+        }
         entViewModel.enterprise.observe(this) { ent ->
             ent?.let {
                 enterprise = it
@@ -40,11 +42,14 @@ class QueueActivity : AppCompatActivity() {
                 it.queue?.let { q -> queueViewModel.getQueueById(q.id) }
             }
         }
-
+        queueViewModel.myPosition.observe(this) {
+            binding.myNumber.text = it?.let { pos -> "Ваш номер: $pos" } ?: "Вы не в очереди"
+        }
         queueViewModel.queue.observe(this) { q ->
             q?.let {
                 queue = it
-                binding.queueNumber.text = "Очередь: ${it.peopleCount}"
+                Log.d("loggg", "Hello")
+                queueViewModel.startAutoRefresh(queue.id)
             }
         }
 

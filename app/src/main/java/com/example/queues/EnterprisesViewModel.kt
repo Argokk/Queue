@@ -16,11 +16,12 @@ class EnterprisesViewModel: ViewModel() {
     var enterprises = MutableLiveData<List<EnterpriseDto>>(mutableListOf())
     var nearEnt = MutableLiveData<List<EnterpriseDto>>(mutableListOf())
     val enterprise = MutableLiveData<EnterpriseDto>()
+
     fun loadEnterprises(){
             viewModelScope.launch {
                 try {
                     enterprises.value = ApiFactory.enterpriseApi.getAllEnt()
-                    //Log.d("my_log",ApiFactory.enterpriseApi.getAllEnt().toString())
+                    Log.d("my_log",ApiFactory.enterpriseApi.getAllEnt().toString())
                 }
                 catch(e: Exception){
                     e.printStackTrace()
@@ -48,4 +49,5 @@ class EnterprisesViewModel: ViewModel() {
         }
         Log.d("my_log",enterprises.value.toString())
     }
+
 }

@@ -6,11 +6,15 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -49,6 +53,25 @@ class HomeFragment : Fragment(), LocationListener {
         binding.rv.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL,false)
 
         onLocationSetup()
+        binding.searchEditText.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                query?.let {
+                    val filtered = enterprises.filter { ent ->
+                        ent.name.contains(it, ignoreCase = true)
+                    }
+                    adapter.updateRv(filtered)
+                }
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                val filtered = enterprises.filter { ent ->
+                    newText?.let { it1 -> ent.name.contains(it1, ignoreCase = true) } ?: true
+                }
+                adapter.updateRv(filtered)
+                return true
+            }
+        })
         return binding.root
     }
     fun onLocationSetup(){
