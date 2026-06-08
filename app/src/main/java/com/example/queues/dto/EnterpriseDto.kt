@@ -6,5 +6,5 @@ data class EnterpriseDto(
     val locationY: Double,
     val name: String,
     val url: String,
-    val queue: QueueDto? // nullable
+    val queue: QueueDto?
 )
