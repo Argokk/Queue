@@ -1,4 +1,4 @@
-package com.example.queues
+package com.example.queues.viewmodel
 
 import android.location.Location
 import android.location.LocationManager
@@ -8,8 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.queues.api.ApiFactory
 import com.example.queues.dto.EnterpriseDto
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class EnterprisesViewModel: ViewModel() {
@@ -21,7 +19,7 @@ class EnterprisesViewModel: ViewModel() {
             viewModelScope.launch {
                 try {
                     enterprises.value = ApiFactory.enterpriseApi.getAllEnt()
-                    Log.d("my_log",ApiFactory.enterpriseApi.getAllEnt().toString())
+                    Log.d("my_log", ApiFactory.enterpriseApi.getAllEnt().toString())
                 }
                 catch(e: Exception){
                     e.printStackTrace()

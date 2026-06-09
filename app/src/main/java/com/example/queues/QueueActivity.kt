@@ -16,6 +16,8 @@ import com.bumptech.glide.Glide
 import com.example.queues.databinding.ActivityQueueBinding
 import com.example.queues.dto.EnterpriseDto
 import com.example.queues.dto.QueueDto
+import com.example.queues.viewmodel.EnterprisesViewModel
+import com.example.queues.viewmodel.QueueEntryViewModel
 
 class QueueActivity : AppCompatActivity() {
 

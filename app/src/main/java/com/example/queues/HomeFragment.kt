@@ -22,6 +22,7 @@ import com.example.queues.api.ApiFactory
 import com.example.queues.api.EnterpriseApi
 import com.example.queues.databinding.FragmentHomeBinding
 import com.example.queues.dto.EnterpriseDto
+import com.example.queues.viewmodel.EnterprisesViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
