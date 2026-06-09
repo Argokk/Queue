@@ -8,5 +8,6 @@ class QueuesApp : Application() {
     override fun onCreate() {
         super.onCreate()
         TokenManager.init(this)
+        AppSettings.applyTheme(this)
     }
 }

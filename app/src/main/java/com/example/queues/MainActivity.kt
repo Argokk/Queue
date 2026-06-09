@@ -57,6 +57,10 @@ class MainActivity : AppCompatActivity() {
 
     }
     fun notifyPermissoin(activity: Activity){
+        if (!AppSettings.notificationsEnabled(activity)) {
+            return
+        }
+
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             val granted = ActivityCompat.checkSelfPermission(activity, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             if(!granted){
@@ -65,6 +69,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
     fun locationPermission() {
+        if (!AppSettings.locationEnabled(this)) {
+            return
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val granted = ActivityCompat.checkSelfPermission(
                 this@MainActivity,
