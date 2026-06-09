@@ -1,9 +1,15 @@
 package com.example.queues
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -11,6 +17,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.WindowCompat
 import com.bumptech.glide.Glide
 import com.example.queues.databinding.ActivityQueueBinding
@@ -18,6 +26,11 @@ import com.example.queues.dto.EnterpriseDto
 import com.example.queues.dto.QueueDto
 import com.example.queues.viewmodel.EnterprisesViewModel
 import com.example.queues.viewmodel.QueueEntryViewModel
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 
 class QueueActivity : AppCompatActivity() {
 
@@ -31,7 +44,9 @@ class QueueActivity : AppCompatActivity() {
     private lateinit var locationManager: LocationManager
 
     private val REQ_LOC_CODE = 1001
+    private val queueChannelId = "queue_notifications"
     private var lastCalledEntryId: Long? = null
+    private var lastMinuteNotificationEntryId: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +60,7 @@ class QueueActivity : AppCompatActivity() {
 
         locationManager = getSystemService(LocationManager::class.java)
 
+        createQueueNotificationChannel()
         requestLocationPermission()
 
         binding.backBut.setOnClickListener {
@@ -84,6 +100,7 @@ class QueueActivity : AppCompatActivity() {
             q?.let {
                 queue = it
                 Log.d("queue_log", "queue loaded: ${it.id}")
+                checkOneMinuteNotification()
             }
         }
 
@@ -99,6 +116,7 @@ class QueueActivity : AppCompatActivity() {
             if (position != null) {
                 binding.myNumber.text = "Ваш номер: $position"
             }
+            checkOneMinuteNotification()
         }
 
         queueEntryViewModel.serviceTimerText.observe(this) { text ->
@@ -110,6 +128,7 @@ class QueueActivity : AppCompatActivity() {
                 "WAITING" -> {
                     binding.newEntryButton.text = "Выйти из очереди"
                     Log.d("queue_status", "Пользователь ожидает")
+                    checkOneMinuteNotification()
                 }
 
                 "CALLED" -> {
@@ -117,6 +136,7 @@ class QueueActivity : AppCompatActivity() {
 
                     if (lastCalledEntryId != entry.id) {
                         lastCalledEntryId = entry.id
+                        lastMinuteNotificationEntryId = null
 
                         Toast.makeText(
                             this,
@@ -129,21 +149,25 @@ class QueueActivity : AppCompatActivity() {
                 "LEFT" -> {
                     binding.newEntryButton.text = "Встать в очередь"
                     lastCalledEntryId = null
+                    lastMinuteNotificationEntryId = null
                 }
 
                 "MISSED" -> {
                     binding.newEntryButton.text = "Встать в очередь"
                     lastCalledEntryId = null
+                    lastMinuteNotificationEntryId = null
                 }
 
                 "FINISHED" -> {
                     binding.newEntryButton.text = "Встать в очередь"
                     lastCalledEntryId = null
+                    lastMinuteNotificationEntryId = null
                 }
 
                 null -> {
                     binding.newEntryButton.text = "Встать в очередь"
                     lastCalledEntryId = null
+                    lastMinuteNotificationEntryId = null
                 }
             }
         }
@@ -224,6 +248,104 @@ class QueueActivity : AppCompatActivity() {
 
         return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun checkOneMinuteNotification() {
+        if (!::queue.isInitialized || !::enterprise.isInitialized || !AppSettings.notificationsEnabled(this)) {
+            return
+        }
+
+        val entry = queueEntryViewModel.currentEntry.value ?: return
+        val position = queueEntryViewModel.myPosition.value ?: return
+
+        if (entry.status != "WAITING" || lastMinuteNotificationEntryId == entry.id) {
+            return
+        }
+
+        val secondsToTurn = calculateSecondsToTurn(position)
+
+        if (secondsToTurn in 1..60) {
+            lastMinuteNotificationEntryId = entry.id
+            showQueueNotification()
+        }
+    }
+
+    private fun calculateSecondsToTurn(position: Int): Long {
+        val serviceSeconds = queue.averageServiceSeconds.toLong().coerceAtLeast(1)
+        val calledEntry = queue.entries?.firstOrNull { it.status == "CALLED" }
+
+        val calledEntrySecondsLeft = calledEntry?.let { entry ->
+            val calledAt = parseBackendInstant(entry.calledAt) ?: return@let serviceSeconds
+            val finishTime = calledAt.plusSeconds(serviceSeconds)
+
+            Duration.between(Instant.now(), finishTime).seconds.coerceAtLeast(0)
+        } ?: 0
+
+        return calledEntrySecondsLeft + ((position - 1).coerceAtLeast(0).toLong() * serviceSeconds)
+    }
+
+    private fun showQueueNotification() {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val intent = Intent(this, QueueActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            if (::enterprise.isInitialized) {
+                putExtra("ent_id", enterprise.id)
+            }
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, queueChannelId)
+            .setSmallIcon(R.drawable.ic_main)
+            .setContentTitle("Скоро ваша очередь")
+            .setContentText("До вашего вызова осталось примерно 1 минута")
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        NotificationManagerCompat.from(this).notify(enterprise.id.toInt(), notification)
+    }
+
+    private fun createQueueNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return
+        }
+
+        val channel = NotificationChannel(
+            queueChannelId,
+            "Уведомления очереди",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun parseBackendInstant(value: String?): Instant? {
+        if (value.isNullOrBlank()) return null
+
+        return runCatching { Instant.parse(value) }.getOrNull()
+            ?: runCatching { OffsetDateTime.parse(value).toInstant() }.getOrNull()
+            ?: runCatching {
+                LocalDateTime.parse(value)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+            }.getOrNull()
     }
 
     override fun onDestroy() {
